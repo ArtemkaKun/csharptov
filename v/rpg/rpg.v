@@ -50,7 +50,7 @@ fn create_player() Player {
 		weapon_quality: get_player_start_weapon_quality()
 	}
 
-	println('Your character - ${Entity(player)}\n')
+	println('Your character - $player\n')
 	return player
 }
 
@@ -69,17 +69,42 @@ fn get_player_start_weapon_quality() u32 {
 }
 
 fn start_main_game_loop(mut player Player) {
-	// for true {
-	current_enemy := create_enemy(player)
+	for true {
+		current_enemy := create_enemy(player)
 
-	println('Current enemy - $current_enemy\n')
-	// }
+		println('Current enemy - $current_enemy\n')
+
+		user_input := os.input('What will you do?\n').trim_space()
+
+		if user_input in ['', exit_command] {
+			break
+		}
+
+		match user_input {
+			hit_command {
+				try_killing_enemy(mut player, current_enemy)
+			}
+			defence_command {
+				try_defending(mut player, current_enemy)
+			}
+			else {
+				println('Unknown command: $user_input')
+				continue
+			}
+		}
+
+		if player.hp == 0 {
+			println('You are dead. Your XP is - $player.get_xp()\n')
+			println('Create a new character\n')
+			player = create_player()
+		} else {
+			println('Your character - $player\n')
+		}
+	}
 }
 
 fn create_enemy(player Player) Entity {
-	// random_value := rand.intn(2) or { 0 }
-	random_value := 1
-	return if random_value == 0 {
+	return if rand.intn(2) or { 0 } == 0 {
 		Entity(create_new_wolf(player))
 	} else {
 		Entity(create_new_guard(player))
@@ -91,15 +116,16 @@ fn create_new_wolf(player Player) Entity {
 		name: 'Wolf'
 		defence: get_random_defence(player)
 		power: get_common_start_power()
+		agility: get_random_agility(player)
 	}
 }
 
 fn get_random_defence(player Player) u32 {
-	return rand.u32n(max_default_enemy_defence * player.xp) or { 0 }
+	return player.xp * rand.u32_in_range(1, max_default_enemy_defence) or { 1 }
 }
 
 fn get_random_agility(player Player) u32 {
-	return rand.u32n(max_default_agility * player.xp) or { 0 }
+	return player.xp * rand.u32_in_range(1, max_default_agility) or { 1 }
 }
 
 fn create_new_guard(player Player) Entity {
@@ -108,9 +134,48 @@ fn create_new_guard(player Player) Entity {
 		defence: get_random_defence(player)
 		power: get_common_start_power()
 		weapon_quality: get_random_weapon_quality(player)
+		xp: get_random_xp(player)
 	}
 }
 
 fn get_random_weapon_quality(player Player) u32 {
-	return rand.u32n(max_default_enemy_weapon_quality * player.xp) or { 0 }
+	return player.xp * rand.u32_in_range(1, max_default_enemy_weapon_quality) or { 1 }
+}
+
+fn get_random_xp(player Player) u32 {
+	return player.xp * rand.u32_in_range(1, (max_default_enemy_xp - 1)) or { 1 }
+}
+
+fn try_killing_enemy(mut player Player, enemy Entity) {
+	can_defeat_enemy := enemy.get_defence_power() <= player.get_attack_power()
+
+	if can_defeat_enemy {
+		println('Enemy was killed!')
+		increment_xp_and_print_message(mut player)
+	} else {
+		println('Your attack is too low ($player.get_attack_power())')
+		decrement_hp_and_print_message(mut player)
+	}
+}
+
+fn try_defending(mut player Player, enemy Entity) {
+	can_defend := player.get_defence_power() >= enemy.get_attack_power()
+
+	if can_defend {
+		println('Enemy was killed by counterattack!')
+		increment_xp_and_print_message(mut player)
+	} else {
+		println('Your defence is too low ($player.get_defence_power())')
+		decrement_hp_and_print_message(mut player)
+	}
+}
+
+fn increment_xp_and_print_message(mut player Player) {
+	player.increment_xp()
+	println('You gain 1 XP, your actual XP is $player.xp')
+}
+
+fn decrement_hp_and_print_message(mut player Player) {
+	player.decrement_hp()
+	println('You lose 1 HP, your actual HP is $player.hp')
 }
