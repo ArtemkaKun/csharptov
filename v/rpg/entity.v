@@ -46,8 +46,25 @@ mut:
 	hp u32 = 100
 }
 
+pub fn (mut player Player) increment_xp() {
+	player.xp += 1
+}
+
+pub fn (mut player Player) decrement_hp() {
+	player.hp -= 1
+}
+
+pub fn (player Player) get_xp() u32 {
+	return player.xp
+}
+
+pub fn (player Player) get_hp() u32 {
+	return player.hp
+}
+
 pub fn (player Player) str() string {
-	return Entity(player).str()
+	return (Entity(player)).str() +
+		', XP - $player.get_xp(), HP - $player.get_hp(), weapon quality - $player.weapon_quality'
 }
 
 pub struct Wolf {
