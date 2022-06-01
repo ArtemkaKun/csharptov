@@ -104,7 +104,7 @@ fn start_main_game_loop(mut player Player) {
 }
 
 fn create_enemy(player Player) Entity {
-	return if rand.intn(2) or { 0 } == 0 {
+	return if rand.bernoulli(0.5) or { true } {
 		Entity(create_new_wolf(player))
 	} else {
 		Entity(create_new_guard(player))
